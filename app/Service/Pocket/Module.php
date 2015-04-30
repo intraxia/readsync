@@ -167,15 +167,19 @@ class Module extends ModuleInterface {
 			}
 
 			$item_obj['item_link'] = $item->resolved_url;
-
-			// @todo convert this to GMT?
-			$item_obj['item_wp_date'] = date_i18n( get_option( 'date_format' ), $item->time_read );
+			$item_obj['source_title'] = 'Pocket'; // @todo change this to the name of the publication?
+			$item_obj['item_date'] = time();
+			$item_obj['item_author'] = 'aggregation';
+			$item_obj['item_content'] = $item_obj['item_link'] . $item_obj['item_title'];
+			$item_obj['item_id'] = md5( $item_obj['item_content'] );
+			$item_obj['item_wp_date'] = $item_obj['item_date'];
+			$item_obj['item_added_date'] =date_i18n( get_option( 'date_format' ), $item->time_read ); // @todo convert this to GMT?
 
 			$imported_urls[ $item_id ] = $item_obj;
 
 			$i++;
 
-			if ( $i === 300 ) {
+			if ( 300 === $i ) {
 				break;
 			}
 		}

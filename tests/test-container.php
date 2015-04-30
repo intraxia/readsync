@@ -23,7 +23,6 @@ class ServiceContainerTest extends \WP_UnitTestCase {
 	}
 
 	public function tearDown() {
-		// see Mockery's documentation for why we do this
 		m::close();
 	}
 }
