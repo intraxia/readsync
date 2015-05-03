@@ -162,6 +162,8 @@ class Api {
 			$body['since'] = $since;
 		}
 
+		pf_log( 'About to get urls' );
+
 		$response = wp_remote_post( $this->base . '/get', array(
 			'headers' => array(
 				'Content-Type' => 'application/json; charset=UTF8',
@@ -170,6 +172,8 @@ class Api {
 			'timeout' => 500,
 			'body' => json_encode( $body )
 		) );
+
+		pf_log( 'Received urls' );
 
 		// @todo there's a check status code function we should use
 		$status = wp_remote_retrieve_response_code( $response );

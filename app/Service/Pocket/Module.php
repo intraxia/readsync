@@ -130,6 +130,7 @@ class Module extends ModuleInterface {
 	 * @todo   make this more robust for error handling
 	 */
 	public function get_data_object( $feed_obj ) {
+		pf_log( 'Invoked: ReadSync\Service\Pocket\Module::get_data_object()' );
 		$api = new Api;
 
 		$response = $api->get_archived_urls( $feed_obj->access_token, $feed_obj->since ? $feed_obj->since : false );
@@ -139,10 +140,14 @@ class Module extends ModuleInterface {
 			return $response;
 		}
 
+		pf_log( 'Receieved ' . count( $list ) . ' urls' );
+
 		$imported_urls = array();
 		$i = 0;
 
 		foreach ( array_reverse( get_object_vars( $response->list ) ) as $item_id => $item ) {
+		pf_log( 'Looping through urls recieved.' );
+
 			$item_obj = array(
 				'item_title'      => '', // obv
 				'source_title'    => '', // name or baseurl of publication, or Pocket
