@@ -131,67 +131,101 @@ class Module extends ModuleInterface {
 	 */
 	public function get_data_object( $feed_obj ) {
 		pf_log( 'Invoked: ReadSync\Service\Pocket\Module::get_data_object()' );
+
 		$api = new Api;
+		$list = get_option( '_rs_pocket_items_remaining' );
 
-		$response = $api->get_archived_urls( $feed_obj->access_token, $feed_obj->since ? $feed_obj->since : false );
+		if ( ! $list ) {
+			pf_log( 'No urls remaining. Retrieving latest.' );
 
-		if ( is_wp_error( $response ) ) {
-			pf_log( 'Error retrieving archived urls for ' . $feed_obj->username );
-			return $response;
-		}
+			$response = $api->get_archived_urls( $feed_obj->access_token, $feed_obj->since ?: false );
 
-		pf_log( 'Receieved ' . count( $list ) . ' urls' );
-
-		$imported_urls = array();
-		$i = 0;
-
-		foreach ( array_reverse( get_object_vars( $response->list ) ) as $item_id => $item ) {
-		pf_log( 'Looping through urls recieved.' );
-
-			$item_obj = array(
-				'item_title'      => '', // obv
-				'source_title'    => '', // name or baseurl of publication, or Pocket
-				'item_date'       => '', // date of publication
-				'item_author'     => '', // original author or "aggregation"
-				'item_content'    => '', // body content, needs dummy content
-				                         // readability: user opens feed, or user nominates item
-				'item_link'       => '', // url
-				'item_id'         => '', // needs to be added ourselves: md5 hash of url + title
-				'item_wp_date'    => '', // entered the system
-				'item_tags'       => '', // @todo get from pocket?
-				'item_added_date' => '', // date added to feed (i.e. date archived)
-				'source_repeat'   => '', // dupe detected, then increment
-			);
-
-			if ( $item->given_title ) {
-				$item_obj['item_title'] = $item->given_title;
-			} else if ( $item->resolved_title ) {
-				$item_obj['item_title'] = $item->resolved_title;
-			} else {
-				$item_obj['item_title'] = $item->resolved_url;
+			if ( is_wp_error( $response ) ) {
+				pf_log( 'Error retrieving archived urls for ' . $feed_obj->username );
+				return $response;
 			}
 
-			$item_obj['item_link'] = $item->resolved_url;
-			$item_obj['source_title'] = 'Pocket'; // @todo change this to the name of the publication?
-			$item_obj['item_date'] = date( 'r', $item->time_read );
-			$item_obj['item_author'] = 'aggregation';
-			$item_obj['item_content'] = $item_obj['item_link'] . $item_obj['item_title'];
-			$item_obj['item_id'] = md5( $item_obj['item_content'] );
-			$item_obj['item_wp_date'] = $item_obj['item_date'];
-			$item_obj['item_added_date'] = date_i18n( get_option( 'date_format' ), $item->time_read ); // @todo convert this to GMT?
+			$list = get_object_vars( $response->list );
 
-			$imported_urls[ $item_id ] = $item_obj;
+			pf_log( 'Receieved ' . count( $list ) . ' urls' );
+		}
+
+		$items = $this->parse_list( $list );
+
+		update_post_meta( $feed_obj->post_id, 'since', $response->since );
+
+		return $items;
+	}
+
+	/**
+	 * Parses response list into PF's items
+	 *
+	 * @param  array  $list  response list
+	 * @return array         PF's items array
+	 */
+	protected function parse_list( $list ) {
+		$urls = array();
+		$i = 0;
+
+		pf_log( 'Looping through urls.' );
+
+		while ( $list ) {
+			$item = array_pop( $list );
+			$urls[] = $this->format_item( $item );
 
 			$i++;
 
-			if ( 300 === $i ) {
+			if ( 250 === $i ) {
 				break;
 			}
 		}
 
-		// @todo save $since to post_meta
+		if ( $list ) {
+			update_option( '_rs_pocket_items_remaining', $list );
+		}
 
-		return $imported_urls;
+		return $urls;
 	}
 
+	/**
+	 * Formats a single response item into a PF item
+	 *
+	 * @param  stdClass $item  response item
+	 * @return array           PF formatted item
+	 */
+	protected function format_item( $item ) {
+		$item_obj = array(
+			'item_title'      => '', // obv
+			'source_title'    => '', // name or baseurl of publication, or Pocket
+			'item_date'       => '', // date of publication
+			'item_author'     => '', // original author or "aggregation"
+			'item_content'    => '', // body content, needs dummy content
+			                         // readability: user opens feed, or user nominates item
+			'item_link'       => '', // url
+			'item_id'         => '', // needs to be added ourselves: md5 hash of url + title
+			'item_wp_date'    => '', // entered the system
+			'item_tags'       => '', // @todo get from pocket?
+			'item_added_date' => '', // date added to feed (i.e. date archived)
+			'source_repeat'   => '', // dupe detected, then increment
+		);
+
+		if ( $item->given_title ) {
+			$item_obj['item_title'] = $item->given_title;
+		} else if ( $item->resolved_title ) {
+			$item_obj['item_title'] = $item->resolved_title;
+		} else {
+			$item_obj['item_title'] = $item->resolved_url;
+		}
+
+		$item_obj['item_link'] = $item->resolved_url;
+		$item_obj['source_title'] = 'Pocket'; // @todo change this to the name of the publication?
+		$item_obj['item_date'] = date( 'r', $item->time_read );
+		$item_obj['item_author'] = 'aggregation';
+		$item_obj['item_content'] = $item_obj['item_link'] . $item_obj['item_title'];
+		$item_obj['item_id'] = md5( $item_obj['item_content'] );
+		$item_obj['item_wp_date'] = $item_obj['item_date'];
+		$item_obj['item_added_date'] = date_i18n( get_option( 'date_format' ), $item->time_read ); // @todo convert this to GMT?
+
+		return $item_obj;
+	}
 }
