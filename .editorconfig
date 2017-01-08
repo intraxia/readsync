@@ -13,13 +13,16 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = tab
 
-[*.json]
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{json,babelrc}]
 indent_style = space
 indent_size = 2
 
-[*.yml]
+[*.{yml,apib,js,hbs,scss}]
 indent_style = space
-indent_size = 2
+indent_size = 4
 
-[*.txt]
+[*.txt,wp-config-sample.php]
 end_of_line = crlf

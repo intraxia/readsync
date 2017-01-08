@@ -2,31 +2,37 @@
   "name": "maadhattah/readsync",
   "type": "wordpress-plugin",
   "license": "GPL-2.0+",
-  "description": "ReadSync backs up your reading list from Pocket, using PressForward's import process",
+  "description": "ReadSync backs up your reading list from Pocket, using PressForward's import.",
   "homepage": "https://github.com/mAAdhaTTah/readsync",
   "authors": [
     {
       "name": "James DiGioia",
       "email": "jamesorodig@gmail.com",
-      "homepage": "http://www.jamesdigioia.com/"
+      "homepage": "http://jamesdigioia.com/"
     }
   ],
   "require": {
     "php": ">=5.3.0",
-    "webdevstudios/cmb2": "2.0.5",
+    "intraxia/jaxion": "dev-master",
     "wpupdatephp/wp-update-php": "~1.0"
   },
   "require-dev": {
+    "squizlabs/php_codesniffer": "~2.3",
+    "intraxia/codestyle": "dev-master",
+    "websharks/wp-i18n-tools": "dev-master",
     "phpunit/phpunit": "4.3.*",
     "mockery/mockery": "~0.9"
   },
   "autoload": {
     "psr-4": {
-      "ReadSync\\": "app/"
-    },
-    "files": ["lib/webdevstudios/cmb2/init.php"]
+      "Intraxia\\Readsync\\": "app/"
+    }
   },
   "config": {
     "vendor-dir": "lib"
+  },
+  "scripts": {
+    "sniff": "phpcs -s --runtime-set installed_paths lib/wp-coding-standards/wpcs  -p app/ --standard=lib/intraxia/codestyle/ruleset.xml --report=full",
+    "genpot": "lib/websharks/wp-i18n-tools/makepot.php wp-plugin app/ $(pwd)/languages/readsync.pot"
   }
 }

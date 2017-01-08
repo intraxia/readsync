@@ -1,8 +1,4 @@
-assets/src
 bin
-bower_components
-node_modules
-tests
 .editorconfig
 .gitignore
 .scrutinizer.yml
@@ -12,4 +8,3 @@ tests
 *.lock
 *.md
 *.xml
-gulpfile.js
